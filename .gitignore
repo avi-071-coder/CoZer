@@ -1,0 +1,27 @@
+# Sensitive data
+.env
+
+# Local data
+analysis_history.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+
+# Node / Frontend
+frontend/node_modules/
+frontend/build/
+frontend/.pnp
+frontend/.pnp.js
+frontend/coverage/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
