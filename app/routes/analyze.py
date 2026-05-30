@@ -1,12 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, field_validator
 from app.services.static_analysis import analyze_code
-from app.services.history import save_analysis, load_history, get_analysis_by_id, delete_analysis
+from app.services.history import save_analysis, load_history, get_analysis_by_id, delete_analysis, clear_history
 
 router = APIRouter()
 
 class CodeRequest(BaseModel):
     code: str
+    language: str = "python"
 
     @field_validator("code")
     @classmethod
@@ -18,7 +19,7 @@ class CodeRequest(BaseModel):
 @router.post("/analyze")
 async def analyze(request: CodeRequest):
     try:
-        result = analyze_code(request.code)
+        result = analyze_code(request.code, request.language)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis engine error: {str(e)}")
 
@@ -26,31 +27,30 @@ async def analyze(request: CodeRequest):
     
     complexity = result["complexity"]
     quality = result["quality"]
-    score = int(result["trust_score"] * 10)
+    score = quality["score"]
 
     # Consolidated multi-metric trend data
-    # We'll provide 3 points for the graph to show a "trend"
     trends = [
         {
             "name": "Start", 
             "score": max(0, score-5), 
-            "readability": max(0, quality["readability"]-10), 
-            "style": max(0, quality["code_style"]-8), 
-            "efficiency": max(0, quality["efficiency"]-2)
+            "readability": max(0, result["readability"]["score"]-10), 
+            "style": max(0, result["style"]["score"]-8), 
+            "efficiency": max(0, result["efficiency"]["score"]-2)
         },
         {
             "name": "Middle", 
             "score": min(100, score+2), 
-            "readability": min(100, quality["readability"]+3), 
-            "style": min(100, quality["code_style"]+5), 
-            "efficiency": min(100, quality["efficiency"]+1)
+            "readability": min(100, result["readability"]["score"]+3), 
+            "style": min(100, result["style"]["score"]+5), 
+            "efficiency": min(100, result["efficiency"]["score"]+1)
         },
         {
             "name": "Current", 
             "score": score, 
-            "readability": quality["readability"], 
-            "style": quality["code_style"], 
-            "efficiency": quality["efficiency"]
+            "readability": result["readability"]["score"], 
+            "style": result["style"]["score"], 
+            "efficiency": result["efficiency"]["score"]
         }
     ]
 
@@ -71,38 +71,53 @@ FUNCTIONALITY:
 
 QUALITY:
 score: {score}
-readability: {quality['readability']}
-code style: {quality['code_style']}
-efficiency: {quality['efficiency']}"""
+readability: {result['readability']['score']}
+code style: {result['style']['score']}
+efficiency: {result['efficiency']['score']}"""
 
     response = {
         "formatted_output": formatted_output,
         "raw_data": {
             "summary": complexity,
             "issues": result["errors"],
+            "syntax_valid": result["syntax_valid"],
+            "syntax_error": result["syntax_error"],
             "complexity": {
                 "time": complexity["big_o"],
                 "space": complexity["space_o"],
-                "ms": complexity["execution_time_ms"]
+                "ms": complexity["execution_time_ms"],
+                "confidence": complexity.get("confidence", 80),
+                "explanation": complexity.get("explanation", "")
             },
+            "readability": result["readability"],
+            "style": result["style"],
+            "efficiency": result["efficiency"],
+            "optimization": result["optimization"],
             "functionality": result["functionality"],
             "quality": {
                 "score": score,
-                "readability": quality["readability"],
-                "codeStyle": quality["code_style"],
-                "efficiency": quality["efficiency"]
+                "grade": quality["grade"],
+                "readability": result["readability"]["score"],
+                "codeStyle": result["style"]["score"],
+                "efficiency": result["efficiency"]["score"]
             },
             "trends": trends,
             "suggestions": result["suggestions"]
         }
     }
     
-    save_analysis(request.code, response)
+    save_analysis(request.code, request.language, response)
     return response
 
 @router.get("/history")
 async def get_history():
     return load_history()
+
+@router.delete("/history")
+async def clear_all_history_endpoint():
+    if clear_history():
+        return {"message": "All history cleared"}
+    raise HTTPException(status_code=500, detail="Failed to clear history")
 
 @router.get("/history/{analysis_id}")
 async def get_past_analysis(analysis_id: str):

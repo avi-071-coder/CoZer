@@ -5,7 +5,7 @@ from typing import List, Dict
 
 HISTORY_FILE = "analysis_history.json"
 
-def save_analysis(code: str, result: Dict):
+def save_analysis(code: str, language: str, result: Dict):
     """Saves an analysis result to the history file."""
     history = load_history()
     
@@ -13,12 +13,13 @@ def save_analysis(code: str, result: Dict):
         "id": datetime.now().strftime("%Y%m%d%H%M%S"),
         "timestamp": datetime.now().isoformat(),
         "code": code,
-        "summary": result["raw_data"]["summary"],
-        "quality": result["raw_data"]["quality"],
-        "functionality": result["raw_data"]["functionality"],
-        "complexity": result["raw_data"]["complexity"],
-        "issues_count": len(result["raw_data"]["issues"]),
-        "formatted_output": result["formatted_output"]
+        "language": language,
+        "summary": result["raw_data"].get("summary", {}),
+        "quality": result["raw_data"].get("quality", {}),
+        "functionality": result["raw_data"].get("functionality", ""),
+        "complexity": result["raw_data"].get("complexity", {}),
+        "issues_count": len(result["raw_data"].get("issues", [])),
+        "formatted_output": result.get("formatted_output", "")
     }
     
     history.insert(0, entry)  # Newest first
@@ -57,3 +58,13 @@ def delete_analysis(analysis_id: str) -> bool:
             json.dump(new_history, f, indent=2)
         return True
     return False
+
+def clear_history() -> bool:
+    """Clears all analysis history."""
+    try:
+        with open(HISTORY_FILE, "w") as f:
+            json.dump([], f, indent=2)
+        return True
+    except Exception:
+        return False
+
