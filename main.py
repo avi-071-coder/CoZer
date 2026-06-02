@@ -233,11 +233,10 @@ async def server_error_handler(request, exc):
 # Lifespan handled above
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=port,
-        reload=False if os.environ.get("PORT") else True,
+        port=8000,
+        reload=True,
         log_level="info"
     )

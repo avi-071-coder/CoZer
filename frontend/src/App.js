@@ -13,11 +13,7 @@ import {
 
 import "./App.css";
 
-let baseUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
-if (!baseUrl.endsWith("/api/v1")) {
-  baseUrl = `${baseUrl.replace(/\/$/, "")}/api/v1`;
-}
-const API_URL = baseUrl;
+const API_URL = "http://localhost:8000/api/v1";
 
 const LANGUAGES = [
   { id: 'python', name: 'Python' },
