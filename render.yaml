@@ -14,11 +14,10 @@ services:
         sync: false  # Enter your Hugging Face API Key in the Render dashboard
 
   # Frontend React Static Site
-  - type: web
+  - type: static
     name: pyzer-frontend
-    runtime: static
     buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: frontend/build
+    publishPath: frontend/build
     headers:
       - path: /*
         headers:
