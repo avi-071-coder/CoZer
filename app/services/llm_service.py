@@ -39,7 +39,7 @@ class UltimateLLM:
         elif provider == "groq":
             url = "https://api.groq.com/openai/v1/chat/completions"
             payload = {
-                "model": "llama3-70b-8192",
+                "model": "llama-3.3-70b-versatile",
                 "messages": [{"role": "user", "content": cleaned_prompt}],
                 "temperature": 0.05,
                 "max_tokens": max_tokens,
