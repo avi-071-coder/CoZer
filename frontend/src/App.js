@@ -13,7 +13,7 @@ import {
 
 import "./App.css";
 
-const API_URL = "http://localhost:8000/api/v1";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000/api/v1";
 
 const LANGUAGES = [
   { id: 'python', name: 'Python' },
